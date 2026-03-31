@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#FF6B6B">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Warmly">
+    <title>Warmly — Family Wellness</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        #app {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .phone-frame {
+            background: white;
+            border-radius: 40px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            aspect-ratio: 9/16;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .status-bar {
+            background: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 100%);
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            font-weight: 600;
+            position: relative;
+        }
+
+        .language-toggle {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .language-toggle:active {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .screen {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .screen::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .screen::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .screen::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 2px;
+        }
+
+        .login-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            text-align: center;
+        }
+
+        .app-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #FF6B6B;
+            margin-bottom: 10px;
+        }
+
+        .app-subtitle {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .setup-instructions {
+            background: #FFF5F5;
+            border: 2px solid #FF6B6B;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            line-height: 1.6;
+            text-align: left;
+        }
+
+        .setup-title {
+            font-weight: 700;
+            color: #C00;
+            margin-bottom: 12px;
+        }
+
+        .setup-step {
+            margin-bottom: 10px;
+        }
+
+        .setup-code {
+            background: white;
+            border: 1px solid #E8E8E8;
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'Monaco', monospace;
+            font-size: 11px;
+            overflow-x: auto;
+            margin-top: 8px;
+            color: #333;
+        }
+
+        .input-group {
+            width: 100%;
+            margin-bottom: 12px;
+        }
+
+        .text-input {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid #E8E8E8;
+            border-radius: 12px;
+            font-size: 14px;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .text-input:focus {
+            outline: none;
+            border-color: #FF6B6B;
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+        }
+
+        .user-selector {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid #E8E8E8;
+            border-radius: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .user-selector:hover {
+            border-color: #FF6B6B;
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.2);
+        }
+
+        .user-selector:focus {
+            outline: none;
+            border-color: #FF6B6B;
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+        }
+
+        .button {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .button-primary {
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF8C8C 100%);
+            color: white;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .button-primary:active {
+            transform: scale(0.98);
+        }
+
+        .button-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .button-secondary {
+            background: #F0F0F0;
+            color: #333;
+            padding: 12px 20px;
+            width: 100%;
+        }
+
+        .button-secondary:active {
+            background: #E0E0E0;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .error {
+            background: #FFE5E5;
+            color: #C00;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .success {
+            background: #E8F5E9;
+            color: #2E7D32;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #F0F0F0;
+            padding-bottom: 12px;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            color: #999;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tab.active {
+            color: #FF6B6B;
+            border-bottom-color: #FF6B6B;
+        }
+
+        .streak-card {
+            background: linear-gradient(135deg, #FFD93D 0%, #FFA500 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .streak-number {
+            font-size: 48px;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+
+        .streak-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .action-button {
+            padding: 20px;
+            border: 2px solid #E8E8E8;
+            border-radius: 16px;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .action-button:active {
+            transform: scale(0.98);
+            border-color: #FF6B6B;
+            background: #FFF5F5;
+        }
+
+        .action-icon {
+            font-size: 28px;
+        }
+
+        .feed-item {
+            background: #F9F9F9;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid #FF6B6B;
+        }
+
+        .feed-name {
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 6px;
+        }
+
+        .feed-message {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .leaderboard {
+            margin-top: 20px;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            background: #F9F9F9;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .leaderboard-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .leaderboard-score {
+            color: #FF6B6B;
+            font-weight: 700;
+        }
+
+        .game-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .game-card {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+            color: white;
+            font-weight: 600;
+            border: 2px solid transparent;
+        }
+
+        .game-card:active {
+            transform: scale(0.95);
+        }
+
+        .game-card.matched {
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF8C8C 100%);
+        }
+
+        .bottom-nav {
+            display: flex;
+            gap: 8px;
+            padding-top: 12px;
+            border-top: 1px solid #E8E8E8;
+            flex-shrink: 0;
+        }
+
+        .bottom-nav-btn {
+            flex: 1;
+            padding: 12px 8px;
+            border: none;
+            background: #F5F5F5;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+
+        .bottom-nav-btn.active {
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF8C8C 100%);
+            color: white;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .reward-progress {
+            background: #F5F5F5;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .reward-label {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .reward-bar {
+            height: 12px;
+            background: white;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #E8E8E8;
+        }
+
+        .reward-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #FF6B6B 0%, #FF8C8C 100%);
+            transition: width 0.3s ease;
+            width: 40%;
+        }
+
+        .confetti {
+            position: fixed;
+            pointer-events: none;
+            font-size: 24px;
+            animation: pop-confetti 1.5s ease-out forwards;
+        }
+
+        @keyframes pop-confetti {
+            0% {
+                transform: translateY(0) rotate(0deg) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg) scale(0);
+                opacity: 0;
+            }
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #FF6B6B;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="phone-frame">
+            <div class="status-bar">
+                <div id="statusText">9:41</div>
+                <button class="language-toggle" id="langToggle">EN</button>
+            </div>
+            <div class="screen" id="mainScreen"></div>
+            <div class="bottom-nav" id="bottomNav"></div>
+        </div>
+    </div>
+
+    <script>
+        // Translations
+        const translations = {
+            en: {
+                selectUser: 'Select Your Name',
+                login: 'Enter',
+                home: 'Home',
+                activity: 'Activity',
+                games: 'Games',
+                stretched: 'I stretched today',
+                walked: 'I walked today',
+                playGame: 'Play a brain game',
+                dayStreak: 'day streak! 🔥',
+                rewardsAwait: 'rewards await! ☕',
+                familyFeed: 'Family Messages',
+                noMessages: 'No messages yet',
+                memoryGame: 'Memory Match',
+                leaderboard: 'Leaderboard',
+                tryAgain: 'Try Again',
+                setupTitle: 'Welcome to Warmly!',
+                setupSubtitle: 'Family wellness through love and connection',
+                setupNeeded: 'Setup Required',
+                setupStep1: '1. Create a Supabase account at supabase.com',
+                setupStep2: '2. Copy your project URL and API key',
+                setupStep3: '3. Click Setup below and paste your credentials',
+                setupBtn: 'Setup Supabase',
+                urlPlaceholder: 'Paste your Supabase URL',
+                keyPlaceholder: 'Paste your Supabase API Key',
+                saveSetup: 'Save & Connect',
+                sending: 'Sending...',
+                logout: 'Logout',
+                language: '中文',
+                error: 'Error',
+                setupComplete: 'Setup Complete!',
+                selectName: 'Now select your name to continue'
+            },
+            zh: {
+                selectUser: '選擇你的名字',
+                login: '進入',
+                home: '主頁',
+                activity: '活動',
+                games: '遊戲',
+                stretched: '今天拉伸了',
+                walked: '今天走路了',
+                playGame: '玩個腦力遊戲',
+                dayStreak: '天連續！ 🔥',
+                rewardsAwait: '獎勵等著你！ ☕',
+                familyFeed: '家人訊息',
+                noMessages: '還沒有訊息',
+                memoryGame: '記憶配對',
+                leaderboard: '排行榜',
+                tryAgain: '再試一次',
+                setupTitle: '歡迎使用 Warmly！',
+                setupSubtitle: '通過愛和連接實現家庭健康',
+                setupNeeded: '需要設置',
+                setupStep1: '1. 在 supabase.com 建立 Supabase 帳戶',
+                setupStep2: '2. 複製你的專案 URL 和 API 密鑰',
+                setupStep3: '3. 按下面的設置並粘貼你的憑證',
+                setupBtn: '設置 Supabase',
+                urlPlaceholder: '粘貼你的 Supabase URL',
+                keyPlaceholder: '粘貼你的 Supabase API 密鑰',
+                saveSetup: '保存並連接',
+                sending: '發送中...',
+                logout: '登出',
+                language: 'EN',
+                error: '錯誤',
+                setupComplete: '✅ 設置完成！',
+                selectName: '現在選擇你的名字繼續'
+            }
+        };
+
+        const FAMILY_MEMBERS = {
+            'mom': { name: '媽媽', emoji: '👩' },
+            'mark': { name: 'Mark (你)', emoji: '👨' },
+            'sister1': { name: 'Sister 1', emoji: '👩' },
+            'grandson': { name: 'Grandson', emoji: '👦' },
+            'sister2': { name: 'Sister 2', emoji: '👩' },
+            'granddaughter': { name: 'Granddaughter', emoji: '👧' }
+        };
+
+        let language = localStorage.getItem('warmly_language') || 'en';
+        let supabaseClient = null;
+        let currentUser = null;
+        let currentScreen = 'login';
+        let appState = {
+            streak: 0,
+            rewards: 0,
+            activities: [],
+            feed: []
+        };
+
+        const t = (key) => translations[language][key] || translations.en[key];
+
+        // Initialize
+        window.addEventListener('load', () => {
+            const savedUrl = localStorage.getItem('warmly_supabase_url');
+            const savedKey = localStorage.getItem('warmly_supabase_key');
+            const savedUser = localStorage.getItem('warmly_user');
+
+            if (savedUrl && savedKey) {
+                initSupabase(savedUrl, savedKey);
+                if (savedUser) {
+                    currentUser = savedUser;
+                    if (currentUser === 'mom') language = 'zh';
+                    currentScreen = 'home';
+                    renderApp();
+                } else {
+                    renderApp();
+                }
+            } else {
+                renderApp();
+            }
+
+            document.getElementById('langToggle').addEventListener('click', toggleLanguage);
+        });
+
+        function initSupabase(url, key) {
+            try {
+                supabaseClient = window.supabase.createClient(url, key);
+            } catch (err) {
+                console.error('Supabase init error:', err);
+            }
+        }
+
+        function toggleLanguage() {
+            language = language === 'en' ? 'zh' : 'en';
+            localStorage.setItem('warmly_language', language);
+            renderApp();
+        }
+
+        function renderApp() {
+            const mainScreen = document.getElementById('mainScreen');
+            const bottomNav = document.getElementById('bottomNav');
+            const langToggle = document.getElementById('langToggle');
+
+            langToggle.textContent = t('language');
+
+            if (!supabaseClient) {
+                mainScreen.innerHTML = `
+                    <div class="login-screen">
+                        <div class="app-title">💝 Warmly</div>
+                        <div class="app-subtitle">${t('setupTitle')}</div>
+                        <div class="setup-instructions">
+                            <div class="setup-title">${t('setupNeeded')}</div>
+                            <div class="setup-step">${t('setupStep1')}</div>
+                            <div class="setup-step">${t('setupStep2')}</div>
+                            <div class="setup-step">${t('setupStep3')}</div>
+                        </div>
+                        <button class="button button-primary" onclick="openSetupModal()">${t('setupBtn')}</button>
+                    </div>
+                `;
+                bottomNav.innerHTML = '';
+                return;
+            }
+
+            if (!currentUser) {
+                mainScreen.innerHTML = `
+                    <div class="login-screen">
+                        <div class="app-title">💝 Warmly</div>
+                        <div class="success">${t('setupComplete')}</div>
+                        <div style="text-align: left; font-size: 14px; color: #666; margin-bottom: 20px;">${t('selectName')}</div>
+                        ${Object.entries(FAMILY_MEMBERS).map(([key, member]) => `
+                            <button class="user-selector" onclick="loginAsUser('${key}')" style="margin-bottom: 12px;">
+                                ${member.emoji} ${member.name}
+                            </button>
+                        `).join('')}
+                        <button class="button button-secondary" onclick="openSetupModal()" style="margin-top: 20px;">Change Setup</button>
+                    </div>
+                `;
+                bottomNav.innerHTML = '';
+                return;
+            }
+
+            // Main app screens
+            bottomNav.innerHTML = `
+                <button class="bottom-nav-btn ${currentScreen === 'home' ? 'active' : ''}" onclick="switchScreen('home')">🏠</button>
+                <button class="bottom-nav-btn ${currentScreen === 'activity' ? 'active' : ''}" onclick="switchScreen('activity')">📊</button>
+                <button class="bottom-nav-btn ${currentScreen === 'games' ? 'active' : ''}" onclick="switchScreen('games')">🎮</button>
+                <button class="bottom-nav-btn" onclick="logout()">🚪</button>
+            `;
+
+            let content = '';
+
+            if (currentScreen === 'home') {
+                if (currentUser === 'mom') {
+                    content = `
+                        <div class="streak-card">
+                            <div>🔥 ${appState.streak}</div>
+                            <div class="streak-number">${appState.streak}</div>
+                            <div class="streak-label">day ${t('dayStreak')}</div>
+                        </div>
+                        <div class="reward-progress">
+                            <div class="reward-label">${appState.rewards} ${t('rewardsAwait')}</div>
+                            <div class="reward-bar">
+                                <div class="reward-fill" style="width: ${Math.min(100, (appState.rewards / 5) * 100)}%"></div>
+                            </div>
+                        </div>
+                        <div class="action-button" onclick="logActivity('stretched')">
+                            <span class="action-icon">🧘</span>
+                            <span>${t('stretched')}</span>
+                        </div>
+                        <div class="action-button" onclick="logActivity('walked')">
+                            <span class="action-icon">🚶</span>
+                            <span>${t('walked')}</span>
+                        </div>
+                        <div class="action-button" onclick="switchScreen('games')">
+                            <span class="action-icon">🧠</span>
+                            <span>${t('playGame')}</span>
+                        </div>
+                        ${appState.feed.length > 0 ? `
+                            <div style="margin-top: 20px;">
+                                <div style="font-weight: 700; margin-bottom: 12px; color: #333;">${t('familyFeed')}</div>
+                                ${appState.feed.map(item => `
+                                    <div class="feed-item">
+                                        <div class="feed-name">${FAMILY_MEMBERS[item.user]?.name || item.user}</div>
+                                        <div class="feed-message">${item.message}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    `;
+                } else {
+                    content = `
+                        <div style="text-align: center;">
+                            <div style="font-size: 18px; font-weight: 700; margin-bottom: 20px; color: #333;">👩 媽媽's Activity</div>
+                            <div style="font-size: 14px; color: #666; margin-bottom: 20px;">Current streak: <strong>${appState.streak} days</strong></div>
+                            <div class="leaderboard">
+                                <div style="font-weight: 700; margin-bottom: 12px; color: #333;">${t('leaderboard')}</div>
+                                <div class="leaderboard-item">
+                                    <div class="leaderboard-name">媽媽</div>
+                                    <div class="leaderboard-score">7 activities</div>
+                                </div>
+                                <div class="leaderboard-item">
+                                    <div class="leaderboard-name">Grandson</div>
+                                    <div class="leaderboard-score">3 activities</div>
+                                </div>
+                                <div class="leaderboard-item">
+                                    <div class="leaderboard-name">Mark</div>
+                                    <div class="leaderboard-score">2 activities</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } else if (currentScreen === 'activity') {
+                content = `<div style="color: #666; text-align: center; margin-top: 40px;">Coming soon...</div>`;
+            } else if (currentScreen === 'games') {
+                content = `
+                    <div style="font-size: 18px; font-weight: 700; margin-bottom: 16px; color: #333;">Today: ${t('memoryGame')}</div>
+                    <div class="game-container">
+                        ${[...Array(16)].map((_, i) => `<div class="game-card">${i % 2 === 0 ? '🎀' : '✨'}</div>`).join('')}
+                    </div>
+                    <div class="leaderboard">
+                        <div style="font-weight: 700; margin-bottom: 12px; color: #333;">${t('leaderboard')}</div>
+                        <div class="leaderboard-item">
+                            <div class="leaderboard-name">Mark</div>
+                            <div class="leaderboard-score">450 pts</div>
+                        </div>
+                        <div class="leaderboard-item">
+                            <div class="leaderboard-name">Grandson</div>
+                            <div class="leaderboard-score">380 pts</div>
+                        </div>
+                        <div class="leaderboard-item">
+                            <div class="leaderboard-name">Granddaughter</div>
+                            <div class="leaderboard-score">320 pts</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            mainScreen.innerHTML = `
+                <div class="nav-tabs">
+                    <button class="nav-tab ${currentScreen === 'home' ? 'active' : ''}" onclick="switchScreen('home')">${t('home')}</button>
+                    <button class="nav-tab ${currentScreen === 'activity' ? 'active' : ''}" onclick="switchScreen('activity')">${t('activity')}</button>
+                    <button class="nav-tab ${currentScreen === 'games' ? 'active' : ''}" onclick="switchScreen('games')">${t('games')}</button>
+                </div>
+                ${content}
+            `;
+        }
+
+        function switchScreen(screen) {
+            currentScreen = screen;
+            renderApp();
+        }
+
+        function loginAsUser(user) {
+            currentUser = user;
+            localStorage.setItem('warmly_user', user);
+            if (user === 'mom') language = 'zh';
+            localStorage.setItem('warmly_language', language);
+            currentScreen = 'home';
+            renderApp();
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('warmly_user');
+            currentScreen = 'login';
+            renderApp();
+        }
+
+        function logActivity(type) {
+            appState.streak += 1;
+            if (appState.streak % 5 === 0) appState.rewards += 1;
+
+            // Show celebration
+            showConfetti();
+
+            // Simulate delay for visual feedback
+            setTimeout(() => {
+                renderApp();
+            }, 500);
+        }
+
+        function showConfetti() {
+            const emojis = ['🎉', '✨', '🌟', '💝'];
+            for (let i = 0; i < 20; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                confetti.style.left = Math.random() * window.innerWidth + 'px';
+                confetti.style.top = window.innerHeight / 2 + 'px';
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 1500);
+            }
+        }
+
+        function openSetupModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal">
+                    <div class="modal-title">${t('setupBtn')}</div>
+                    <div id="setupError" class="hidden"></div>
+                    <div class="input-group">
+                        <input type="text" id="urlInput" class="text-input" placeholder="${t('urlPlaceholder')}">
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="keyInput" class="text-input" placeholder="${t('keyPlaceholder')}">
+                    </div>
+                    <button class="button button-primary" onclick="saveSetup()">${t('saveSetup')}</button>
+                    <button class="button button-secondary" onclick="closeModal()" style="margin-top: 8px;">Cancel</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+        }
+
+        function saveSetup() {
+            const url = document.getElementById('urlInput').value.trim();
+            const key = document.getElementById('keyInput').value.trim();
+            const errorEl = document.getElementById('setupError');
+
+            if (!url || !key) {
+                errorEl.textContent = `${t('error')}: Please enter both URL and API Key`;
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            localStorage.setItem('warmly_supabase_url', url);
+            localStorage.setItem('warmly_supabase_key', key);
+            initSupabase(url, key);
+            closeModal();
+            renderApp();
+        }
+
+        function closeModal() {
+            document.querySelector('.modal-overlay')?.remove();
+        }
+    </script>
+</body>
+</html>
